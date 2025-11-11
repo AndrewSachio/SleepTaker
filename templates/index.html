@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediksi Kualitas Tidur</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Sleep Taker by 3,5</h1> 
+        <p>Silahkan masukkan data anda untuk memprediksikan seberapa nyenyak tidur Anda.</p>
+        
+        <form id="prediction-form">
+            <label for="usia">Usia (Tahun):</label>
+            <input type="number" id="usia" name="usia" min="1" max="100" required>
+            
+            <label for="durasi_tidur">Durasi Tidur (Jam):</label>
+            <input type="number" id="durasi_tidur" name="durasi_tidur" step="0.1" min="1" max="24" required>
+            
+            <label for="tingkat_stress">Tingkat Stres (Skala 1-10):</label>
+            <div class="slider-container">
+                <input type="range" id="tingkat_stress" name="tingkat_stress" min="1" max="10" value="1" required>
+                <span id="stress-value">1</span>
+            </div>
+            
+            <label for="aktivitas_fisik_skala">Aktivitas Fisik (Skala 1-10):</label>
+            <div class="slider-container">
+                <input type="range" id="aktivitas_fisik_skala" name="aktivitas_fisik_skala" min="1" max="10" value="1" required>
+                <span id="activity-value">1</span>
+            </div>
+            
+            <button type="submit">Prediksi Kualitas Tidur</button>
+        </form>
+        
+        <div id="result-container" class="hidden">
+            <h2>Hasil Prediksi:</h2>
+            <p id="prediction-score">Skor: -</p>
+            <p id="prediction-quality">Kualitas: -</p>
+        </div>
+    </div>
+    
+    <script>
+        const stressSlider = document.getElementById('tingkat_stress');
+        const stressValue = document.getElementById('stress-value');
+        stressSlider.oninput = function() { stressValue.innerHTML = this.value; }
+        
+        const activitySlider = document.getElementById('aktivitas_fisik_skala');
+        const activityValue = document.getElementById('activity-value');
+        activitySlider.oninput = function() { activityValue.innerHTML = this.value; }
+
+        document.getElementById('prediction-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const resultBox = document.getElementById('result-container');
+            const scoreEl = document.getElementById('prediction-score');
+            const qualityEl = document.getElementById('prediction-quality');
+
+            scoreEl.textContent = 'Memprediksi...';
+            qualityEl.textContent = '';
+            resultBox.classList.remove('hidden');
+
+            fetch('/predict', {
+                method: 'POST',
+                body: new FormData(this) 
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.error) {
+                    scoreEl.textContent = 'Error:';
+                    qualityEl.textContent = data.error;
+                    scoreEl.style.color = '#ff4d4d'; 
+                } else {
+                    scoreEl.textContent = data.skor_prediksi; 
+                    qualityEl.textContent = data.kualitas_tidur; 
+                    scoreEl.style.color = '#e0e0e0'; 
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                scoreEl.textContent = 'Error:';
+                qualityEl.textContent = 'Gagal terhubung ke server.';
+                scoreEl.style.color = '#ff4d4d';
+            });
+        });
+    </script>
+</body>
+</html>
